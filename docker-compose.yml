@@ -1,0 +1,36 @@
+services:
+  db-legal:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file: .env
+
+  backend-django:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8080
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db-legal
+    environment:
+      - PYTHONUNBUFFERED=1
+      
+  ai-engine:
+    build: ./ai_engine
+    volumes:
+      - ./ai_engine:/app
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+  nginx-proxy:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - backend-django
+      - ai-engine
+
+volumes:
+  postgres_data:

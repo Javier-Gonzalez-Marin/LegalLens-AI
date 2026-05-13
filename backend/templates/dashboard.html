@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LegalLens AI - Dashboard Profesional</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        .bg-custom-dark { background-color: #2c3e50; }
+        .card-stats { border: none; border-radius: 12px; transition: transform 0.2s; }
+        .table-container { background: white; border-radius: 15px; overflow: hidden; }
+        
+        /* --- ESTILOS DE IMPRESIÓN PROFESIONAL --- */
+        @media print {
+            /* Ocultar todo lo que no sea el contenido del modal */
+            body * { visibility: hidden; }
+            .modal.show, .modal.show * { visibility: visible; }
+            
+            /* Posicionar el contenido al inicio de la página */
+            .modal.show {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            /* Eliminar elementos innecesarios en el PDF */
+            .modal-footer, .btn-close, .modal-backdrop { display: none !important; }
+            .modal-content { border: none !important; box-shadow: none !important; }
+            
+            /* Forzar colores de fondo en el PDF */
+            .bg-dark, .bg-custom-dark {
+                background-color: #2c3e50 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Ajuste de margen para el folio */
+            @page { margin: 1cm; }
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-custom-dark mb-4 shadow d-print-none">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-check"></i> <strong>LegalLens AI</strong>
+            </a>
+            <div class="d-flex align-items-center text-white">
+                <span class="me-3">
+                    <i class="bi bi-person-circle"></i> Abogado: <strong>{{ request.user.username }}</strong>
+                </span>
+                <form action="{% url 'logout' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">Salir</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container d-print-none">
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card card-stats shadow-sm text-center py-3">
+                    <h6 class="text-muted small">TOTAL ANALIZADOS</h6>
+                    <h2 class="fw-bold">{{ total_analizados|default:"0" }}</h2>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card card-stats shadow-sm text-center py-3 border-start border-danger border-4">
+                    <h6 class="text-danger small">BANDERAS ROJAS</h6>
+                    <h2 class="fw-bold text-danger">{{ total_banderas_rojas|default:"0" }}</h2>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card card-stats shadow-sm text-center py-3 border-start border-success border-4">
+                    <h6 class="text-success small">CONTRATOS LIMPIOS</h6>
+                    <h2 class="fw-bold text-success">{{ total_limpios|default:"0" }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="h4">Mis Auditorías</h3>
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="bi bi-cloud-upload"></i> Nuevo Análisis
+            </button>
+        </div>
+
+        <div class="card table-container shadow-sm mb-5">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Archivo</th>
+                            <th>Cliente</th>
+                            <th>Tipo</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contrato in contratos %}
+                        <tr>
+                            <td class="fw-bold small">{{ contrato.nombre }}</td>
+                            <td>{{ contrato.cliente }}</td>
+                            <td><span class="badge bg-secondary">{{ contrato.tipo }}</span></td>
+                            <td class="text-muted small">{{ contrato.fecha|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if contrato.estado == "Limpio" %}
+                                    <span class="badge bg-success">Limpio</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Banderas Rojas</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal{{ contrato.id }}">
+                                        Ver Informe
+                                    </button>
+                                    <form action="{% url 'delete_contract' contrato.id %}" method="POST" onsubmit="return confirm('¿Seguro que quieres borrar este registro?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center py-4 text-muted">No hay contratos registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% for contrato in contratos %}
+    <div class="modal fade" id="modal{{ contrato.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Informe LegalLens AI</h5>
+                    <button type="button" class="btn-close btn-close-white d-print-none" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-none d-print-block text-center mb-4">
+                        <h2>AUDITORÍA DE CONTRATO</h2>
+                        <hr>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <p class="mb-1 text-muted small">ARCHIVO ANALIZADO</p>
+                            <h6 class="fw-bold">{{ contrato.nombre }}</h6>
+                        </div>
+                        <div class="col-6 text-end">
+                            <p class="mb-1 text-muted small">CLIENTE</p>
+                            <h6 class="fw-bold">{{ contrato.cliente }}</h6>
+                        </div>
+                    </div>
+
+                    <div class="p-4 border rounded bg-light">
+                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-info-circle"></i> PUNTOS CLAVE</h6>
+                        <ul class="mb-4">
+                            {% for punto in contrato.puntos_clave %}
+                                <li>{{ punto }}</li>
+                            {% empty %}
+                                <li>No se extrajeron puntos clave.</li>
+                            {% endfor %}
+                        </ul>
+
+                        <h6 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle"></i> RIESGOS DETECTADOS</h6>
+                        {% if contrato.hallazgos %}
+                            <ul class="text-danger fw-bold">
+                                {% for riesgo in contrato.hallazgos %}
+                                    <li>{{ riesgo }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-success"><i class="bi bi-check-circle"></i> Contrato verificado. Sin cláusulas abusivas detectadas.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-4 small text-muted text-center d-none d-print-block">
+                        Informe generado por LegalLens AI el {% now "d/m/Y" %}
+                    </div>
+                </div>
+                <div class="modal-footer d-print-none">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-success" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Imprimir Informe
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="modal fade d-print-none" id="uploadModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Auditoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{% url 'upload_contract' %}" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Cliente</label>
+                            <input type="text" name="client_name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Contrato</label>
+                            <select name="contract_type" class="form-select">
+                                <option value="alquiler">Alquiler</option>
+                                <option value="nda">NDA (Confidencialidad)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Archivo PDF</label>
+                            <input type="file" name="pdf_file" class="form-control" accept=".pdf" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary w-100">Iniciar Análisis IA</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
