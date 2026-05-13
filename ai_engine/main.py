@@ -11,7 +11,7 @@ except ImportError:
 app = FastAPI()
 
 # --- CONFIGURACIÓN ---
-API_KEY_EXITOSA = "AIzaSyAa81fzixMU_ws1YOUYDpsKpmUsDtM3DuE" 
+API_KEY_EXITOSA = "Key" 
 client = genai.Client(api_key=API_KEY_EXITOSA)
 
 @app.post("/api/audit")
