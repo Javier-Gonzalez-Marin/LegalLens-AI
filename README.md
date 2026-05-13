@@ -31,7 +31,7 @@ DJANGO_SECRET_KEY=una_clave_secreta_para_desarrollo
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-Esquema de clases y aplicación de POO
+# Esquema de clases y aplicación de POO
 En este proyecto es la base de la lógica de negocio para procesar los contratos de forma organizada:
 
 1. Modelo de Datos (Contrato)
