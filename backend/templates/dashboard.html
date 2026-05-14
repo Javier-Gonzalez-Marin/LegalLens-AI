@@ -12,13 +12,10 @@
         .card-stats { border: none; border-radius: 12px; transition: transform 0.2s; }
         .table-container { background: white; border-radius: 15px; overflow: hidden; }
         
-        /* --- ESTILOS DE IMPRESIÓN PROFESIONAL --- */
         @media print {
-            /* Ocultar todo lo que no sea el contenido del modal */
             body * { visibility: hidden; }
             .modal.show, .modal.show * { visibility: visible; }
             
-            /* Posicionar el contenido al inicio de la página */
             .modal.show {
                 position: absolute;
                 left: 0;
@@ -28,11 +25,9 @@
                 padding: 0;
             }
 
-            /* Eliminar elementos innecesarios en el PDF */
             .modal-footer, .btn-close, .modal-backdrop { display: none !important; }
             .modal-content { border: none !important; box-shadow: none !important; }
             
-            /* Forzar colores de fondo en el PDF */
             .bg-dark, .bg-custom-dark {
                 background-color: #2c3e50 !important;
                 color: white !important;
@@ -40,7 +35,6 @@
                 print-color-adjust: exact;
             }
             
-            /* Ajuste de margen para el folio */
             @page { margin: 1cm; }
         }
     </style>
