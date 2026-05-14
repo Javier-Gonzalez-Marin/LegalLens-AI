@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User # El modelo de abogados/usuarios de Django
+from django.contrib.auth.models import User 
 
 class Contrato(models.Model):
     # Relacionamos el contrato con el abogado que lo sube
