@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 @login_required # Solo abogados logueados pueden ver esto
 def dashboard(request):
-    # FILTRO CLAVE: Solo traemos los contratos del abogado actual
     mis_contratos = Contrato.objects.filter(abogado=request.user).order_by('-fecha')
     
     total_analizados = mis_contratos.count()
@@ -48,9 +47,8 @@ def upload_contract(request):
                     hallazgos = res_ia.get('banderas_rojas', [])
                     tiene_riesgos = len(hallazgos) > 0 and "No se detectaron" not in str(hallazgos[0])
                     
-                    # GUARDAR EN BASE DE DATOS en lugar de la lista
                     Contrato.objects.create(
-                        abogado=request.user, # Asignamos el abogado actual
+                        abogado=request.user, 
                         nombre=archivo.name,
                         cliente=cliente,
                         tipo=tipo_input.upper(),
@@ -67,7 +65,6 @@ def upload_contract(request):
 
 @login_required
 def delete_contract(request, contrato_id):
-    # Buscamos el contrato, pero asegurándonos de que pertenezca al abogado actual
     contrato = get_object_or_404(Contrato, id=contrato_id, abogado=request.user)
     
     if request.method == 'POST':
