@@ -20,7 +20,6 @@ async def audit_endpoint(tipo: str = Form(...), file: UploadFile = File(...)):
         contenido_binario = await file.read()
         texto_extraido = ""
 
-        # 1. Extracción de texto
         if file.filename.lower().endswith('.pdf') and fitz:
             doc = fitz.open(stream=contenido_binario, filetype="pdf")
             texto_extraido = "".join([p.get_text() for p in doc])
@@ -31,8 +30,7 @@ async def audit_endpoint(tipo: str = Form(...), file: UploadFile = File(...)):
         if not texto_extraido.strip():
             return {"resultado": {"puntos_clave": ["Error"], "banderas_rojas": ["El archivo no contiene texto legible."]}}
 
-        # 2. FASE DE VERIFICACIÓN (Clasificación)
-        # Le pedimos a la IA que identifique el documento antes de analizarlo
+        # 2. FASE DE VERIFICACIÓN 
         prompt_verificacion = f"""
         Analiza el inicio de este documento y dime qué tipo de contrato es. 
         Solo responde con una palabra: 'ALQUILER', 'NDA' (si es confidencialidad) o 'DESCONOCIDO'.
@@ -49,7 +47,6 @@ async def audit_endpoint(tipo: str = Form(...), file: UploadFile = File(...)):
         tipo_seleccionado = tipo.upper() # El que viene del formulario de Django
 
         # 3. LÓGICA DE VALIDACIÓN CRUZADA
-        # Mapeamos 'acuerdo de confidencialidad' o 'NDA' para que coincidan
         es_nda = "CONFIDENCIALIDAD" in tipo_seleccionado or "NDA" in tipo_seleccionado
         es_alquiler = "ALQUILER" in tipo_seleccionado or "ARRENDAMIENTO" in tipo_seleccionado
 
@@ -67,7 +64,7 @@ async def audit_endpoint(tipo: str = Form(...), file: UploadFile = File(...)):
                 }
             }
 
-        # 4. ANÁLISIS (Solo si la validación es correcta)
+        # 4. ANÁLISIS 
         prompt_analisis = f"""
         Analiza este contrato de {tipo}. Sé breve y directo.
         
@@ -89,7 +86,6 @@ async def audit_endpoint(tipo: str = Form(...), file: UploadFile = File(...)):
         
         texto_ia = response.text
 
-        # Procesar respuesta para el Dashboard
         partes = texto_ia.split("FALLOS Y RIESGOS:")
         puntos = partes[0].replace("PUNTOS CLAVE:", "").strip()
         fallos = partes[1].strip() if len(partes) > 1 else "Ninguno detectado"
