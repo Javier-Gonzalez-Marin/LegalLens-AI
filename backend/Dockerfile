@@ -13,5 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Comando para ejecutar Django (ajusta 'config' al nombre de tu proyecto)
+# Comando para ejecutar Django 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]
